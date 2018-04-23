@@ -1,0 +1,48 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>How to filter resources in ASPxScheduler via ASPxListBox - Developer Express Example</title>
+<style>
+html, body, form 
+{
+	font-family: Tahoma, Arial, Verdana;
+    font-size: small;
+    color: #303440;
+}
+h1 {
+	font-size: 125%;
+	font-weight: normal;
+	color: Black;
+	letter-spacing: 101%;
+}
+</style>
+</head>
+<body>
+<h1>Developer Express Example<br />How to filter resources in ASPxScheduler via ASPxListBox</h1>
+<p>This example illustrates how to implement resource filtering at the datasource level via a checked list box that is represented by the ASPxListBox Class (http://documentation.devexpress.com/#AspNet/clsDevExpressWebASPxEditorsASPxListBoxtopic) with the ASPxListBox.SelectionMode Property (http://documentation.devexpress.com/#AspNet/DevExpressWebASPxEditorsASPxListBox_SelectionModetopic) set to CheckColumn. This list box is bound to a resource datasource. When the list box selection is changed, we initiate a custom FLTRES callback command (http://documentation.devexpress.com/#AspNet/CustomDocument5462) of the scheduler from the client side, as shown below:
+
+scheduler.RaiseCallback('FLTRES|' + s.GetSelectedValues().join(','));
+
+We intercept and handle this command on the server side in the Page_Init event handler:
+
+   protected void Page_Init(object sender, EventArgs e) {
+       string param = Page.Request["__CALLBACKPARAM"]; 
+       if (!IsPostBack)
+           Session["resourcesSelectCommand"] = defaultResourcesSelectCommand; 
+       if (!string.IsNullOrEmpty(param) && param.Contains("FLTRES|")) {
+           string resources = param.Substring(param.IndexOf('|') + 1);
+           if (resources.Length > 0)
+               Session["resourcesSelectCommand"] = string.Format("SELECT [ID], [Model] FROM [Cars] WHERE [ID] IN ({0})", resources);
+           else
+               Session["resourcesSelectCommand"] = defaultResourcesSelectCommand;
+       } 
+       SqlDataSourceResources.SelectCommand = Session["resourcesSelectCommand"].ToString();
+   }
+
+That is, we parse callback command parameters and update the resource datasource SQL select command accordingly. We need to make this modification at such an early stage because it is too late to do this in the Page_Load or ASPxScheduler.BeforeExecuteCallbackCommand (http://documentation.devexpress.com/#AspNet/DevExpressWebASPxSchedulerASPxScheduler_BeforeExecuteCallbackCommandtopic) event handlers. This topic is described in the http://www.devexpress.com/scid=B195177 thread in greater detail.
+
+Prior to running this example, it is required to register a CarsXtraScheduling database in your local SQL Server instance. You can download the corresponding SQL scripts from the http://www.devexpress.com/scid=E215 example.</p>
+<p>You can find sample updates and versions for different programming languages here:<br /><a href="http://www.devexpress.com/example=E3783">http://www.devexpress.com/example=E3783</a>.</p>
+</body>
+</html>
